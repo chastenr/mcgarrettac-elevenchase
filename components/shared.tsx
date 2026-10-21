@@ -13,7 +13,7 @@ import {
   Plus,
   X,
 } from "lucide-react";
-import { motion, useReducedMotion } from "motion/react";
+import { stagger, useAnimate, useInView, useReducedMotion } from "motion/react";
 import {
   useEffect,
   useId,
@@ -95,7 +95,7 @@ export function RequestLink({
   return (
     <a
       href="#contact"
-      className={className}
+      className={`sh-request-link ${className}`}
       onClick={() => select(service, property)}
     >
       {children}
@@ -210,16 +210,85 @@ export function Reveal({
   className?: string;
 }) {
   const reduce = useReducedMotion();
+  const [scope, animate] = useAnimate<HTMLDivElement>();
+  const inView = useInView(scope, {
+    once: true,
+    amount: 0.12,
+    margin: "0px 0px -32px 0px",
+  });
+  const entered = useRef(false);
+
+  useEffect(() => {
+    const element = scope.current;
+    if (!element || !inView || entered.current) return;
+    entered.current = true;
+
+    // No initial styles are written during render: the complete content is
+    // visible in server HTML, without JavaScript, and for reduced motion.
+    if (reduce || window.matchMedia("(prefers-reduced-motion: reduce)").matches)
+      return;
+
+    const items = Array.from(element.children).filter(
+      (child): child is HTMLElement =>
+        child instanceof HTMLElement &&
+        child.tagName !== "IMG" &&
+        !child.querySelector("img") &&
+        !child.classList.contains("sh-reveal"),
+    );
+    const images = Array.from(element.querySelectorAll("img")).filter(
+      (image) => image.closest(".sh-reveal") === element,
+    );
+    const siblings = Array.from(element.parentElement?.children ?? []).filter(
+      (child) => child.classList.contains("sh-reveal"),
+    );
+    const groupDelay = Math.min(Math.max(siblings.indexOf(element), 0), 3) * 0.06;
+    const animations: ReturnType<typeof animate>[] = [];
+    const clearStyles = () => {
+      [...items, ...images].forEach((item) => {
+        item.style.removeProperty("opacity");
+        item.style.removeProperty("transform");
+      });
+    };
+
+    element.classList.add("sh-reveal--entered");
+    if (items.length)
+      animations.push(
+        animate(
+          items,
+          { opacity: [0.24, 1], y: [28, 0] },
+          {
+            duration: 0.62,
+            delay: stagger(0.07, { startDelay: groupDelay }),
+            ease: [0.22, 1, 0.36, 1],
+          },
+        ),
+      );
+    if (images.length)
+      animations.push(
+        animate(
+          images,
+          { opacity: [0.65, 1], scale: [1.065, 1] },
+          {
+            duration: 0.9,
+            delay: groupDelay,
+            ease: [0.22, 1, 0.36, 1],
+          },
+        ),
+      );
+
+    // Motion commits its final DOM values in a render frame after completion.
+    // Clear on the following frame so image hover transforms remain available.
+    void Promise.all(animations).then(() => requestAnimationFrame(clearStyles));
+    return () => {
+      animations.forEach((animation) => animation.complete());
+      clearStyles();
+    };
+  }, [animate, inView, reduce, scope]);
+
   return (
-    <motion.div
-      className={className}
-      initial={false}
-      whileInView={reduce ? undefined : { opacity: [0.72, 1], y: [14, 0] }}
-      viewport={{ once: true, amount: 0.1 }}
-      transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-    >
+    <div ref={scope} className={`sh-reveal ${className}`}>
       {children}
-    </motion.div>
+    </div>
   );
 }
 
@@ -246,7 +315,7 @@ export function FAQSection({ variant }: { variant: Variant }) {
             Talk with McGarrett <ArrowUpRight size={17} aria-hidden="true" />
           </a>
         </Reveal>
-        <div className="sh-faq__questions">
+        <Reveal className="sh-faq__questions">
           {faqs.map((faq, index) => (
             <details key={faq.question} className="sh-faq__item">
               <summary>
@@ -259,7 +328,7 @@ export function FAQSection({ variant }: { variant: Variant }) {
               </div>
             </details>
           ))}
-        </div>
+        </Reveal>
       </div>
     </section>
   );
@@ -343,9 +412,9 @@ export function AreaSection({ variant }: { variant: Variant }) {
       aria-labelledby="service-area-title"
     >
       <div className="sh-shell sh-area__layout">
-        <div className="sh-area__visual">
+        <Reveal className="sh-area__visual">
           <AreaIllustration warm={variant === "home"} />
-        </div>
+        </Reveal>
         <Reveal className="sh-area__copy">
           <p className="sh-eyebrow">Local service. Familiar places.</p>
           <h2 id="service-area-title">
@@ -676,7 +745,9 @@ export function ContactSection({ variant }: { variant: Variant }) {
             </div>
           </div>
         </Reveal>
-        <RequestForm />
+        <Reveal className="sh-contact__form-reveal">
+          <RequestForm />
+        </Reveal>
       </div>
     </section>
   );
@@ -686,7 +757,7 @@ export function SiteFooter({ variant }: { variant: Variant }) {
   return (
     <footer className={`sh-footer sh-footer--${variant}`}>
       <div className="sh-shell">
-        <div className="sh-footer__top">
+        <Reveal className="sh-footer__top">
           <div className="sh-footer__brand">
             <a
               href="#top"
@@ -748,7 +819,7 @@ export function SiteFooter({ variant }: { variant: Variant }) {
               Northwest Harris County
             </span>
           </div>
-        </div>
+        </Reveal>
         <div className="sh-footer__bottom">
           <span>© {new Date().getFullYear()} McGarrett A/C & Heating</span>
           <span>License identifier: {business.license}</span>

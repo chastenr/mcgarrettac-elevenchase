@@ -148,6 +148,9 @@
 .sh-header__desktop > a:hover::after {
   transform: scaleX(1);
 }
+.sh-header__desktop > a:focus-visible::after {
+  transform: scaleX(1);
+}
 .sh-header__actions {
   display: flex;
   align-items: center;
@@ -190,6 +193,35 @@
 .sh-button--solid:hover {
   background: #174db0;
   transform: translateY(-2px);
+}
+.sh-button:active {
+  transform: translateY(0) scale(0.985);
+}
+.sh-request-link > svg,
+.sh-button > svg,
+.sh-text-link > svg,
+.sh-concepts__all > svg,
+.sh-header__phone > svg,
+.sh-header__mobile > a > svg,
+.sh-contact__email > svg,
+.sh-footer__phone > svg,
+.sh-mobile-bar > a > svg {
+  flex-shrink: 0;
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.sh-request-link:is(:hover, :focus-visible) > svg,
+.sh-button:is(:hover, :focus-visible) > svg,
+.sh-text-link:is(:hover, :focus-visible) > svg,
+.sh-concepts__all:is(:hover, :focus-visible) > svg,
+.sh-header__mobile > a:is(:hover, :focus-visible) > svg,
+.sh-contact__email:is(:hover, :focus-visible) > svg,
+.sh-footer__phone:is(:hover, :focus-visible) > svg,
+.sh-mobile-bar > a:last-child:is(:hover, :focus-visible) > svg {
+  transform: translate(3px, -2px);
+}
+.sh-header__phone:is(:hover, :focus-visible) > svg,
+.sh-mobile-bar > a:first-child:is(:hover, :focus-visible) > svg {
+  transform: rotate(-14deg);
 }
 .sh-header--home .sh-button {
   border-radius: 5px;
@@ -240,6 +272,10 @@
   width: 25px;
   height: 1px;
   background: currentColor;
+  transform-origin: left;
+}
+.sh-reveal--entered .sh-eyebrow::before {
+  animation: sh-rule-enter 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 .sh-text-link {
   display: inline-flex;
@@ -300,6 +336,13 @@
   padding: 24px 0;
   min-height: 72px;
   user-select: none;
+  transition: color 0.18s;
+}
+.sh-faq__item summary:is(:hover, :focus-visible) {
+  color: #1a59a5;
+}
+.sh-faq--home .sh-faq__item summary:is(:hover, :focus-visible) {
+  color: #8f3b2a;
 }
 .sh-faq__item summary::-webkit-details-marker {
   display: none;
@@ -327,6 +370,29 @@
 }
 .sh-faq__answer p {
   margin: 0;
+}
+/* Native details remain fully functional in older browsers. Browsers with
+   intrinsic-size transitions also animate both expansion and collapse. */
+@supports (interpolate-size: allow-keywords) and selector(::details-content) {
+  .sh-faq__item {
+    interpolate-size: allow-keywords;
+  }
+  .sh-faq__item::details-content {
+    block-size: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition:
+      block-size 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 0.24s ease,
+      content-visibility 0.32s allow-discrete;
+  }
+  .sh-faq__item[open]::details-content {
+    block-size: auto;
+    opacity: 1;
+  }
+  .sh-faq__answer {
+    animation: none;
+  }
 }
 .sh-faq--home {
   background: #faf6ef;
@@ -637,6 +703,9 @@
   background: #fff;
   color: #102c40;
   padding: 34px 36px 36px;
+}
+.sh-contact__form-reveal {
+  min-width: 0;
 }
 .sh-form__heading {
   display: flex;
@@ -1024,6 +1093,24 @@
 .sh-mobile-bar {
   display: none;
 }
+@keyframes sh-rule-enter {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes sh-nav-enter {
+  from {
+    opacity: 0.15;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 @keyframes sh-open {
   from {
     opacity: 0.5;
@@ -1194,6 +1281,22 @@
     font-size: 14px;
     text-decoration: none;
     min-height: 48px;
+    animation: sh-nav-enter 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .sh-header__mobile > a:nth-child(2) {
+    animation-delay: 0.035s;
+  }
+  .sh-header__mobile > a:nth-child(3) {
+    animation-delay: 0.07s;
+  }
+  .sh-header__mobile > a:nth-child(4) {
+    animation-delay: 0.105s;
+  }
+  .sh-header__mobile > a:nth-child(5) {
+    animation-delay: 0.14s;
+  }
+  .sh-header__mobile > a:nth-child(6) {
+    animation-delay: 0.175s;
   }
   .sh-header--home .sh-header__mobile > a {
     border-top-color: #17384a20;
@@ -1822,6 +1925,25 @@
   .sh-form select,
   .sh-form textarea,
   .sh-mobile-bar {
+    transition: none;
+  }
+  .sh-request-link > svg,
+  .sh-button > svg,
+  .sh-text-link > svg,
+  .sh-concepts__all > svg,
+  .sh-header__phone > svg,
+  .sh-header__mobile > a > svg,
+  .sh-contact__email > svg,
+  .sh-footer__phone > svg,
+  .sh-mobile-bar > a > svg {
+    transition: none;
+    transform: none !important;
+  }
+  .sh-reveal--entered .sh-eyebrow::before,
+  .sh-header__mobile > a {
+    animation: none;
+  }
+  .sh-faq__item::details-content {
     transition: none;
   }
   .sh-button:hover {

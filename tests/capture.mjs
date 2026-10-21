@@ -32,6 +32,40 @@ async function settle(page) {
     window.scrollTo(0, 0);
   });
   await page.waitForTimeout(300);
+  const brokenImages = await page
+    .locator("img")
+    .evaluateAll((images) =>
+      images
+        .filter(
+          (image) =>
+            image.getBoundingClientRect().width > 0 &&
+            (!image.complete || image.naturalWidth === 0),
+        )
+        .map((image) => ({ src: image.currentSrc, alt: image.alt })),
+    );
+  if (brokenImages.length) {
+    throw new Error(
+      `Capture stopped: photographs or previews failed to load: ${JSON.stringify(brokenImages)}`,
+    );
+  }
+}
+
+async function openForCapture(page, route) {
+  const errors = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(message.text());
+  });
+  const response = await page.goto(`${baseURL}${route}`, {
+    waitUntil: "networkidle",
+  });
+  if (!response?.ok())
+    throw new Error(`Capture stopped: ${route} returned ${response?.status()}`);
+  await settle(page);
+  if (errors.length)
+    throw new Error(
+      `Capture stopped: ${route} produced browser errors: ${errors.join("; ")}`,
+    );
 }
 
 try {
@@ -42,10 +76,7 @@ try {
       reducedMotion: "reduce",
       deviceScaleFactor: 1,
     });
-    await page.goto(`${baseURL}/design-${number}`, {
-      waitUntil: "networkidle",
-    });
-    await settle(page);
+    await openForCapture(page, `/design-${number}`);
     await page.screenshot({
       path: path.join(root, `public/previews/design-${number}-desktop.jpg`),
       type: "jpeg",
@@ -70,14 +101,23 @@ try {
         reducedMotion: "reduce",
         deviceScaleFactor: 1,
       });
-      await page.goto(`${baseURL}${route.path}`, { waitUntil: "networkidle" });
-      await settle(page);
+      await openForCapture(page, route.path);
       const filename = `screenshots/${route.name}-${viewport.name}.png`;
       await page.screenshot({
         path: path.join(root, filename),
         fullPage: true,
       });
       console.log(filename);
+      if (route.name === "design-2") {
+        await page
+          .getByRole("button", { name: "Warm things up", exact: true })
+          .click();
+        await page.evaluate(() => window.scrollTo(0, 0));
+        await page.waitForTimeout(100);
+        const heatingFilename = `screenshots/design-2-${viewport.name}-heating.png`;
+        await page.screenshot({ path: path.join(root, heatingFilename) });
+        console.log(heatingFilename);
+      }
       await page.close();
     }
   }

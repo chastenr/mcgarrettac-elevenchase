@@ -137,6 +137,7 @@ export default function Presentation() {
                   <div className="browser-image">
                     <Image
                       src={concept.image}
+                      unoptimized
                       alt={`Actual desktop homepage preview of ${concept.name}`}
                       width={1440}
                       height={1240}

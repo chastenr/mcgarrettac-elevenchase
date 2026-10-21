@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
 const concepts = [
@@ -12,6 +12,25 @@ async function ready(page: Page, path: string) {
   expect(response?.ok(), `Direct load of ${path}`).toBeTruthy();
   await page.evaluate(() => document.fonts.ready);
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+}
+
+async function expectReadableHeroHeading(hero: Locator) {
+  const heading = hero.getByRole("heading", { level: 1 });
+  await expect(heading).toBeVisible();
+  const obscuredText = await heading.evaluate((element) =>
+    [element, ...element.querySelectorAll("span, em")]
+      .filter((fragment) => {
+        let ancestor: Element | null = fragment;
+        while (ancestor && ancestor !== document.body) {
+          const style = getComputedStyle(ancestor);
+          if (Number(style.opacity) < 0.99 || style.visibility === "hidden") return true;
+          ancestor = ancestor.parentElement;
+        }
+        return false;
+      })
+      .map((fragment) => fragment.textContent),
+  );
+  expect(obscuredText, "Every headline fragment and its ancestors remain readable").toEqual([]);
 }
 
 async function visitWholePage(page: Page) {
@@ -448,7 +467,151 @@ test("Design 2: the needs selector fills the editable request without losing det
   );
 });
 
+test("Design 2: hero comfort choices work by keyboard and preserve an editable request", async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(message.text());
+  });
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await ready(page, "/design-2");
+  const hero = page.locator("main section").first();
+  const cooling = hero.getByRole("button", {
+    name: "Keep it cool",
+    exact: true,
+  });
+  const heating = hero.getByRole("button", {
+    name: "Warm things up",
+    exact: true,
+  });
+  await expect(cooling).toHaveAttribute("aria-pressed", "true");
+  await expect(heating).toHaveAttribute("aria-pressed", "false");
+  const name = page.getByRole("textbox", { name: /^Your name/ });
+  const phone = page.getByRole("textbox", { name: /^Phone number/ });
+  const description = page.getByRole("textbox", { name: /^How can we help/ });
+  await name.fill("Morgan Preview");
+  await phone.fill("+1 (346) 555-0188");
+  await description.fill("Please discuss the equipment at our property.");
+  await page
+    .getByRole("combobox", { name: /^Property type/ })
+    .selectOption("Multifamily");
+  await heating.focus();
+  await page.keyboard.press("Space");
+  await expect(heating).toHaveAttribute("aria-pressed", "true");
+  await expect(cooling).toHaveAttribute("aria-pressed", "false");
+  await hero
+    .getByRole("link", { name: "Request service", exact: true })
+    .click();
+  await expect(
+    page.getByRole("combobox", { name: /^Service needed/ }),
+  ).toHaveValue("heating");
+  await expect(
+    page.getByRole("combobox", { name: /^Property type/ }),
+  ).toHaveValue("Multifamily");
+  await expect(name).toHaveValue("Morgan Preview");
+  await expect(phone).toHaveValue("+1 (346) 555-0188");
+  await expect(description).toHaveValue(
+    "Please discuss the equipment at our property.",
+  );
+  await cooling.focus();
+  await page.keyboard.press("Enter");
+  await expect(cooling).toHaveAttribute("aria-pressed", "true");
+  await expect(heating).toHaveAttribute("aria-pressed", "false");
+  await hero
+    .getByRole("link", { name: "Request service", exact: true })
+    .click();
+  await expect(
+    page.getByRole("combobox", { name: /^Service needed/ }),
+  ).toHaveValue("cooling");
+  await expect(name).toHaveValue("Morgan Preview");
+  await expect(phone).toHaveValue("+1 (346) 555-0188");
+  await expect(description).toHaveValue(
+    "Please discuss the equipment at our property.",
+  );
+  await expect(
+    page.getByRole("combobox", { name: /^Property type/ }),
+  ).toHaveValue("Multifamily");
+  expect(
+    errors,
+    "Hero interaction must not introduce runtime or hydration errors",
+  ).toEqual([]);
+});
+
+test("Design 2: reduced motion leaves the hero settled after changing comfort choices", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await ready(page, "/design-2");
+  const hero = page.locator("main section").first();
+  await hero
+    .getByRole("button", { name: "Warm things up", exact: true })
+    .click();
+  await expect(
+    hero.getByRole("button", { name: "Warm things up", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await expect(hero.getByRole("heading", { level: 1 })).toHaveCSS(
+    "opacity",
+    "1",
+  );
+  await expect(
+    hero.getByRole("link", { name: "Request service", exact: true }),
+  ).toBeVisible();
+  await expect
+    .poll(
+      () =>
+        hero.evaluate(
+          (element) =>
+            element.getAnimations({ subtree: true }).filter((animation) => {
+              if (animation.playState !== "running") return false;
+              const duration = animation.effect?.getComputedTiming().duration;
+              return typeof duration === "number" && duration > 20;
+            }).length,
+        ),
+      { message: "Reduced motion must not leave a running hero animation" },
+    )
+    .toBe(0);
+  await expectReadableHeroHeading(hero);
+});
+
 for (const concept of concepts) {
+  test(`${concept.design}: primary content and contact anchors work without JavaScript`, async ({
+    browser,
+    baseURL,
+  }) => {
+    const context = await browser.newContext({
+      javaScriptEnabled: false,
+      reducedMotion: "reduce",
+      viewport: { width: 375, height: 812 },
+      baseURL,
+    });
+    try {
+      const page = await context.newPage();
+      await ready(page, concept.path);
+      const hero = page.locator("main section").first();
+      await expectReadableHeroHeading(hero);
+      const call = hero.getByRole("link", {
+        name: "Call 346-946-7577",
+        exact: true,
+      });
+      await expect(call).toBeVisible();
+      await expect(call).toHaveAttribute("href", "tel:+13469467577");
+      const request = hero.getByRole("link", {
+        name: "Request service",
+        exact: true,
+      });
+      await expect(request).toHaveAttribute("href", "#contact");
+      await request.click();
+      await expect(page).toHaveURL(/#contact$/);
+      await expect(
+        page.getByRole("textbox", { name: /^Your name/ }),
+      ).toBeVisible();
+    } finally {
+      await context.close();
+    }
+  });
+
   test(`${concept.design}: reduced motion keeps primary content immediately available`, async ({
     page,
   }) => {

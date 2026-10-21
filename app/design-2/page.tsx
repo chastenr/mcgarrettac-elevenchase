@@ -1,15 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import {
-  ArrowDown,
-  ArrowRight,
-  Building2,
-  Check,
-  HeartHandshake,
-  Leaf,
-  Phone,
-  Sparkles,
-} from "lucide-react";
+import { ArrowDown, ArrowRight, Check, Leaf, Sparkles } from "lucide-react";
 import {
   AreaSection,
   ConceptControls,
@@ -22,8 +13,9 @@ import {
   SiteHeader,
 } from "@/components/shared";
 import { MaintenanceTopics, NeedSelector } from "@/components/design-two";
-import { business } from "@/lib/content";
+import { DesignTwoHero } from "@/components/design-two-hero";
 import "./design-two.css";
+import "./hero.css";
 
 export const metadata: Metadata = {
   title: "Comfort, Close to Home — McGarrett A/C & Heating",
@@ -40,55 +32,7 @@ export default function DesignTwo() {
       <ConceptControls active={2} />
       <SiteHeader variant="home" />
       <main id="main-content">
-        <section className="d2-hero container" aria-labelledby="d2-hero-title">
-          <div className="d2-hero-copy">
-            <p className="d2-eyebrow">
-              <span /> YOUR LOCAL HEATING & COOLING COMPANY
-            </p>
-            <h1 id="d2-hero-title">
-              A more
-              <br />
-              comfortable
-              <br />
-              <em>home starts here.</em>
-            </h1>
-            <p className="d2-hero-description">
-              Life feels better when your space does. Family-owned A/C and
-              heating service for Tomball, Greater Houston, and Northwest Harris
-              County.
-            </p>
-            <div className="d2-hero-actions">
-              <RequestLink className="d2-button">
-                Request service <ArrowRight size={18} aria-hidden="true" />
-              </RequestLink>
-              <a className="d2-call-link" href={business.tel}>
-                <Phone size={17} aria-hidden="true" />
-                Call {business.phone}
-              </a>
-            </div>
-            <a className="d2-business-path" href="#services">
-              <Building2 size={17} aria-hidden="true" /> Here for a business or
-              multifamily property? <ArrowRight size={16} aria-hidden="true" />
-            </a>
-          </div>
-          <div className="d2-hero-visual">
-            <div className="d2-hero-photo">
-              <Image
-                src="/images/local-home.jpg"
-                alt="McGarrett A/C & Heating team beside their company service truck"
-                fill
-                preload
-                sizes="(max-width: 700px) 115vw, (max-width: 1100px) 100vw, 1000px"
-              />
-            </div>
-            <div className="d2-photo-caption">
-              <span>FAMILIAR FACES. EXPERIENCED HANDS.</span>
-              <span>
-                TOMBALL, TEXAS <HeartHandshake size={17} aria-hidden="true" />
-              </span>
-            </div>
-          </div>
-        </section>
+        <DesignTwoHero />
 
         <div className="d2-facts container" aria-label="About McGarrett">
           <span>

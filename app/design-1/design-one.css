@@ -1078,19 +1078,192 @@
   color: #526875;
 }
 
-.service-panel-photo {
-  animation: precision-crossfade 0.3s ease-out;
+/* The hero is readable from the first frame; only its position settles. */
+.precision-hero h1 {
+  animation: precision-hero-settle 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
-@keyframes precision-crossfade {
-  from {
-    opacity: 0.65;
+.precision-hero-description {
+  animation: precision-hero-settle 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.06s both;
+}
+.precision-hero-actions {
+  animation: precision-hero-settle 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both;
+}
+.precision-intent {
+  animation: precision-hero-settle 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.16s both;
+  transition: box-shadow 0.2s;
+}
+.precision-intent:focus-within {
+  box-shadow: inset 3px 0 #1e63d8;
+}
+.blue-line {
+  transform-origin: left center;
+  animation: precision-line-enter 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.08s both;
+}
+.hero-side-note::before {
+  content: "";
+  position: absolute;
+  top: -70px;
+  left: 50%;
+  height: 48px;
+  width: 1px;
+  background: #ffffff66;
+  transform-origin: center top;
+  animation: precision-side-line 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.18s both;
+}
+.intent-continue,
+.intent-continue > svg,
+.precision-service-index > button > .service-row-icon,
+.precision-service-index > button > svg:last-child,
+.property-segments > button {
+  transition: color 0.2s, background 0.2s, transform 0.2s;
+}
+.intent-continue:hover > svg,
+.intent-continue:focus-visible > svg {
+  transform: translate(2px, -2px);
+}
+.precision-service-index > button {
+  position: relative;
+  isolation: isolate;
+}
+.precision-service-index > button > :not(.service-row-active) {
+  position: relative;
+  z-index: 1;
+}
+.service-row-active {
+  position: absolute;
+  inset: 7px 0;
+  z-index: 0;
+  background: #e5edf8;
+  border-left: 3px solid #1e63d8;
+  pointer-events: none;
+}
+.precision-service-index > button.selected {
+  background: transparent;
+}
+.precision-service-index > button.selected > .service-row-icon {
+  transform: translateX(2px);
+}
+.precision-service-index > button:hover > svg:last-child,
+.precision-service-index > button:focus-visible > svg:last-child {
+  transform: translate(3px, -3px);
+}
+.precision-photo-layer {
+  position: absolute;
+  inset: 0;
+}
+.precision-photo-layer img {
+  object-fit: cover;
+}
+.service-panel-copy-stage,
+.property-copy-stage {
+  display: grid;
+  flex: 1;
+}
+.service-panel-copy-stage {
+  min-height: 126px;
+}
+.service-panel-description,
+.property-info-copy {
+  grid-area: 1 / 1;
+}
+.property-copy-stage {
+  min-height: 260px;
+}
+.property-segments > button {
+  position: relative;
+}
+.property-segments > button[aria-pressed="true"] {
+  border-bottom-color: transparent;
+}
+.property-segment-active {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: #1e63d8;
+}
+.property-segments > button:hover {
+  color: #1e63d8;
+}
+.property-image-label {
+  z-index: 1;
+}
+.mobile-service-panel {
+  overflow: hidden;
+}
+.precision-mobile-service .mobile-service-content > p {
+  font-size: 12px;
+  line-height: 1.8;
+  margin-top: 18px;
+  color: #526875;
+  max-width: 95%;
+}
+.precision-mobile-service > button,
+.precision-mobile-service .accordion-sign {
+  transition: color 0.2s, background 0.2s, transform 0.2s;
+}
+.precision-mobile-service > button[aria-expanded="true"] .accordion-sign {
+  transform: rotate(180deg);
+}
+.precision-story-photo {
+  overflow: hidden;
+}
+@keyframes precision-hero-settle {
+  from { transform: translateY(10px); }
+  to { transform: translateY(0); }
+}
+@keyframes precision-line-enter {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+@keyframes precision-side-line {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+@keyframes precision-photo-settle {
+  from { transform: scale(1.05); }
+  to { transform: scale(1); }
+}
+@media (min-width: 901px) and (prefers-reduced-motion: no-preference) {
+  .precision-hero-photo {
+    animation: precision-photo-settle 1.2s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
-  to {
-    opacity: 1;
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .service-panel-photo img,
+  .property-image img,
+  .precision-story-photo > img {
+    transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
   }
+  .service-panel-photo:hover img,
+  .property-image:hover img,
+  .precision-story-photo:hover > img {
+    transform: scale(1.035);
+  }
+}
+@media (max-width: 650px) {
+  .property-copy-stage { min-height: 270px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .service-panel-photo {
+  .precision-hero h1,
+  .precision-hero-description,
+  .precision-hero-actions,
+  .precision-intent,
+  .precision-hero-photo,
+  .blue-line,
+  .hero-side-note::before {
     animation: none;
+  }
+  .precision-intent,
+  .intent-continue,
+  .intent-continue > svg,
+  .precision-service-index > button > .service-row-icon,
+  .precision-service-index > button > svg:last-child,
+  .property-segments > button,
+  .precision-mobile-service > button,
+  .precision-mobile-service .accordion-sign {
+    transition: none;
+    transform: none !important;
   }
 }

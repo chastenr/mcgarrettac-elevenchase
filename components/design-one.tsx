@@ -3,6 +3,13 @@
 import { useState, useRef, type KeyboardEvent } from "react";
 import Image from "next/image";
 import {
+  AnimatePresence,
+  LayoutGroup,
+  motion,
+  useIsPresent,
+  useReducedMotion,
+} from "motion/react";
+import {
   ArrowUpRight,
   ArrowRight,
   Check,
@@ -72,11 +79,58 @@ export function HeroIntent() {
 
 const explorerServices = services.slice(0, 4);
 const serviceIcons = [Snowflake, Flame, Building2, Wind];
+const panelEase = [0.22, 1, 0.36, 1] as const;
+
+function PhotoLayer({
+  src,
+  alt,
+  sizes,
+}: {
+  src: string;
+  alt: string;
+  sizes: string;
+}) {
+  const present = useIsPresent();
+  const reduce = useReducedMotion();
+  return (
+    <motion.div
+      className="precision-photo-layer"
+      aria-hidden={!present}
+      initial={reduce ? false : { opacity: 0, scale: 1.035 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: reduce ? 0 : 0.35, ease: panelEase }}
+    >
+      <Image src={src} alt={present ? alt : ""} fill sizes={sizes} />
+    </motion.div>
+  );
+}
+
+function ServiceCopy({ index }: { index: number }) {
+  const present = useIsPresent();
+  const reduce = useReducedMotion();
+  const service = explorerServices[index];
+  return (
+    <motion.div
+      className="service-panel-description"
+      aria-hidden={!present}
+      initial={reduce ? false : { opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: reduce ? 0 : -5 }}
+      transition={{ duration: reduce ? 0 : 0.25, ease: panelEase }}
+    >
+      <span className="eyebrow">0{index + 1} / Our expertise</span>
+      <h3>{service.title}</h3>
+      <p>{service.description}</p>
+    </motion.div>
+  );
+}
 
 export function ServiceExplorer() {
   const [selected, setSelected] = useState(0);
   const [mobileOpen, setMobileOpen] = useState<number | null>(0);
   const tabs = useRef<(HTMLButtonElement | null)[]>([]);
+  const reduce = useReducedMotion();
   const current = explorerServices[selected];
   function navigate(event: KeyboardEvent<HTMLButtonElement>, index: number) {
     let next = index;
@@ -94,6 +148,7 @@ export function ServiceExplorer() {
   return (
     <>
       <div className="precision-explorer-desktop">
+        <LayoutGroup id="precision-service-selection">
         <div
           className="precision-service-index"
           role="tablist"
@@ -117,6 +172,14 @@ export function ServiceExplorer() {
                 onClick={() => setSelected(i)}
                 onKeyDown={(e) => navigate(e, i)}
               >
+                {selected === i && (
+                  <motion.span
+                    className="service-row-active"
+                    aria-hidden="true"
+                    layoutId={reduce ? undefined : "active-service"}
+                    transition={reduce ? { duration: 0 } : { type: "spring", stiffness: 430, damping: 38 }}
+                  />
+                )}
                 <span className="service-row-number">0{i + 1}</span>
                 <Icon className="service-row-icon" size={23} />
                 <span>{s.title}</span>
@@ -130,6 +193,7 @@ export function ServiceExplorer() {
             Practical help for the space you depend on.
           </p>
         </div>
+        </LayoutGroup>
         <div
           className="precision-service-panel"
           role="tabpanel"
@@ -137,19 +201,16 @@ export function ServiceExplorer() {
           aria-labelledby={`service-tab-${current.id}`}
           tabIndex={0}
         >
-          <div className="service-panel-photo" key={current.image}>
-            <Image
-              src={current.image}
-              alt={current.alt}
-              fill
-              sizes="(max-width: 900px) 100vw, 48vw"
-            />
+          <div className="service-panel-photo">
+            <AnimatePresence initial={false}>
+              <PhotoLayer key={current.image} src={current.image} alt={current.alt} sizes="(max-width: 900px) 100vw, 48vw" />
+            </AnimatePresence>
           </div>
           <div className="service-panel-copy">
-            <div>
-              <span className="eyebrow">0{selected + 1} / Our expertise</span>
-              <h3>{current.title}</h3>
-              <p>{current.description}</p>
+            <div className="service-panel-copy-stage" aria-live="polite">
+              <AnimatePresence initial={false}>
+                <ServiceCopy key={current.id} index={selected} />
+              </AnimatePresence>
             </div>
             <RequestLink service={current.id} className="text-link">
               Request this service <ArrowUpRight size={18} />
@@ -172,12 +233,18 @@ export function ServiceExplorer() {
                 <strong>{s.title}</strong>
                 <span className="accordion-sign">{expanded ? "−" : "+"}</span>
               </button>
-              <div
-                hidden={!expanded}
+              <motion.div
+                className="mobile-service-panel"
                 id={`mobile-panel-${s.id}`}
                 role="region"
                 aria-labelledby={`mobile-service-${s.id}`}
+                aria-hidden={!expanded}
+                inert={!expanded}
+                initial={false}
+                animate={{ height: expanded ? "auto" : 0, opacity: expanded ? 1 : 0 }}
+                transition={{ duration: reduce ? 0 : 0.32, ease: panelEase }}
               >
+                <div className="mobile-service-content">
                 <div className="mobile-service-photo">
                   <Image src={s.image} alt={s.alt} fill sizes="90vw" />
                 </div>
@@ -185,7 +252,8 @@ export function ServiceExplorer() {
                 <RequestLink service={s.id} className="text-link">
                   Request this service <ArrowUpRight size={18} />
                 </RequestLink>
-              </div>
+                </div>
+              </motion.div>
             </div>
           );
         })}
@@ -224,25 +292,48 @@ const properties = [
   },
 ];
 
+function PropertyCopy({ index }: { index: number }) {
+  const present = useIsPresent();
+  const reduce = useReducedMotion();
+  const item = properties[index];
+  return (
+    <motion.div
+      className="property-info-copy"
+      aria-hidden={!present}
+      initial={reduce ? false : { opacity: 0, x: 10 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: reduce ? 0 : -8 }}
+      transition={{ duration: reduce ? 0 : 0.28, ease: panelEase }}
+    >
+      <p className="eyebrow">For every kind of everyday</p>
+      <h3>{item.heading}</h3>
+      <p>{item.copy}</p>
+      <ul>
+        {item.points.map((point) => (
+          <li key={point}><Check size={16} aria-hidden="true" />{point}</li>
+        ))}
+      </ul>
+    </motion.div>
+  );
+}
+
 export function PropertySegments() {
   const [selected, setSelected] = useState(0);
+  const reduce = useReducedMotion();
   const item = properties[selected];
   return (
     <div className="precision-properties-grid">
       <div className="property-image">
-        <Image
-          key={item.image}
-          src={item.image}
-          alt={item.alt}
-          fill
-          sizes="(max-width: 800px) 100vw, 50vw"
-        />
+        <AnimatePresence initial={false}>
+          <PhotoLayer key={item.image} src={item.image} alt={item.alt} sizes="(max-width: 800px) 100vw, 50vw" />
+        </AnimatePresence>
         <span className="property-image-label">
           <span />
           Built around your space
         </span>
       </div>
       <div className="property-info">
+        <LayoutGroup id="precision-property-selection">
         <div
           className="property-segments"
           role="group"
@@ -254,22 +345,16 @@ export function PropertySegments() {
               onClick={() => setSelected(i)}
               aria-pressed={selected === i}
             >
-              {p.type}
+              <span>{p.type}</span>
+              {selected === i && <motion.span className="property-segment-active" aria-hidden="true" layoutId={reduce ? undefined : "active-property"} transition={{ duration: reduce ? 0 : 0.3, ease: panelEase }} />}
             </button>
           ))}
         </div>
-        <div className="property-info-copy" aria-live="polite">
-          <p className="eyebrow">For every kind of everyday</p>
-          <h3>{item.heading}</h3>
-          <p>{item.copy}</p>
-          <ul>
-            {item.points.map((point) => (
-              <li key={point}>
-                <Check size={16} />
-                {point}
-              </li>
-            ))}
-          </ul>
+        </LayoutGroup>
+        <div className="property-copy-stage" aria-live="polite">
+          <AnimatePresence initial={false}>
+            <PropertyCopy key={item.type} index={selected} />
+          </AnimatePresence>
         </div>
         <RequestLink
           property={item.type}
