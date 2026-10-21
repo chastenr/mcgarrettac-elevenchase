@@ -45,14 +45,17 @@ export default function PrecisionComfort() {
       <SiteHeader variant="precision" />
       <main id="main">
         <section className="precision-hero" aria-labelledby="hero-heading">
-          <Image
-            className="precision-hero-photo"
-            src="/images/ac-repair.jpg"
-            alt="McGarrett technician inspecting heating and cooling equipment"
-            fill
-            preload
-            sizes="100vw"
-          />
+          <div className="precision-hero-media">
+            <Image
+              className="precision-hero-photo"
+              src="/images/hd/ac-repair.jpg"
+              alt="McGarrett technician inspecting heating and cooling equipment"
+              fill
+              preload
+              quality={90}
+              sizes="100vw"
+            />
+          </div>
           <div className="precision-hero-shade" />
           <div className="container precision-hero-inner">
             <div className="precision-hero-copy">

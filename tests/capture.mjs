@@ -70,17 +70,20 @@ async function openForCapture(page, route) {
 
 try {
   // Capture real homepage previews before loading the selection page that uses them.
+  // They are retina (2x) and three screens tall so the selection page can scroll them.
   for (const number of [1, 2]) {
     const page = await browser.newPage({
       viewport: { width: 1440, height: 1240 },
       reducedMotion: "reduce",
-      deviceScaleFactor: 1,
+      deviceScaleFactor: 2,
     });
     await openForCapture(page, `/design-${number}`);
     await page.screenshot({
       path: path.join(root, `public/previews/design-${number}-desktop.jpg`),
       type: "jpeg",
-      quality: 88,
+      quality: 90,
+      fullPage: true,
+      clip: { x: 0, y: 0, width: 1440, height: 3720 },
     });
     await page.close();
     console.log(

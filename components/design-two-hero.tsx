@@ -161,10 +161,11 @@ export function DesignTwoHero() {
             <div className="d2-hero-photo-outline" aria-hidden="true" />
             <div className="d2-hero-main-photo">
               <Image
-                src="/images/local-home.jpg"
+                src="/images/hd/local-home.jpg"
                 alt="McGarrett A/C & Heating team beside their company service truck"
                 fill
                 preload
+                quality={90}
                 sizes="(max-width: 700px) 115vw, (max-width: 1100px) 100vw, 1000px"
               />
             </div>

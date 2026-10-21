@@ -16,10 +16,16 @@
   background: #102c40;
   color: #fff;
   overflow: hidden;
+  view-timeline: --precision-hero block;
+}
+.precision-hero-media {
+  position: absolute;
+  inset: 0;
 }
 .precision-hero-photo {
   object-fit: cover;
   object-position: 70% 40%;
+  transform-origin: 70% 40%;
 }
 .precision-hero-shade {
   position: absolute;
@@ -1222,12 +1228,37 @@
   to { transform: scaleY(1); }
 }
 @keyframes precision-photo-settle {
-  from { transform: scale(1.05); }
+  from { transform: scale(1.1); }
   to { transform: scale(1); }
+}
+/* A slow camera drift; it starts where the settle ends, so there is no jump. */
+@keyframes precision-photo-drift {
+  from { transform: scale(1) translate3d(0, 0, 0); }
+  to { transform: scale(1.08) translate3d(-1.5%, -1%, 0); }
+}
+@keyframes precision-photo-parallax {
+  to { transform: translate3d(0, 22%, 0); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .precision-hero-photo {
+    will-change: transform;
+    animation: precision-photo-drift 26s ease-in-out infinite alternate;
+  }
 }
 @media (min-width: 901px) and (prefers-reduced-motion: no-preference) {
   .precision-hero-photo {
-    animation: precision-photo-settle 1.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation:
+      precision-photo-settle 1.8s cubic-bezier(0.22, 1, 0.36, 1) both,
+      precision-photo-drift 26s 1.8s ease-in-out infinite alternate;
+  }
+}
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .precision-hero-media {
+      animation: precision-photo-parallax linear both;
+      animation-timeline: --precision-hero;
+      animation-range: exit 0% exit 100%;
+    }
   }
 }
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {

@@ -36,7 +36,9 @@ Shared typed business facts live in `lib/content.ts`. The homepages remain Serve
 
 Design 2 now opens with layered company and service photography, an animated handwritten underline, a one-time line illustration, a family-business note, and a small pointer response on desktop. The cooling/heating choices change the supporting image and description, then carry the chosen service into the editable request form. Critical headings and calls to action stay visible immediately.
 
-Both concepts have stronger once-only staggered section reveals, image settling, moving selection indicators, service/property crossfades, smooth accordions, and button/navigation feedback. Reduced-motion users receive a settled layout, and server-rendered content remains readable without JavaScript. There are no continuous decorative animation loops.
+Both concepts have stronger once-only staggered section reveals, image settling, moving selection indicators, service/property crossfades, smooth accordions, and button/navigation feedback. Reduced-motion users receive a settled layout, and server-rendered content remains readable without JavaScript.
+
+The hero photographs use 2× upscaled sources in `public/images/hd/` served at quality 90. After settling, they keep a slow camera drift. Design 1's hero also has scroll parallax (CSS scroll-driven animation, in browsers that support it), and Design 2's family badge, inset card, and sun glow float gently. On the selection page, the retina previews give a short peek on load and scroll through the homepage on hover or keyboard focus. On touch screens, they tour automatically. All of these loops stop under reduced motion.
 
 ## Validation and screenshots
 
